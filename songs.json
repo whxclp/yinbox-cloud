@@ -185,6 +185,41 @@
       "artist": "",
       "file": "娘的眼泪（王玉珍原唱全曲）.m4a",
       "lrc": ""
+    },
+    {
+      "title": "心愿（MV·刘老师教唱）",
+      "artist": "",
+      "file": "mv_xinyuan.mp4",
+      "type": "mv",
+      "lrc": ""
+    },
+    {
+      "title": "娘的眼泪（MV·王玉珍）",
+      "artist": "",
+      "file": "mv_niangdeyanlei.mp4",
+      "type": "mv",
+      "lrc": ""
+    },
+    {
+      "title": "众手浇开幸福花（MV·梦之旅合唱）",
+      "artist": "",
+      "file": "mv_zhongshou.mp4",
+      "type": "mv",
+      "lrc": ""
+    },
+    {
+      "title": "我喝了爱情的鹤顶红（MV·朱梅玲）",
+      "artist": "",
+      "file": "mv_hedinghong.mp4",
+      "type": "mv",
+      "lrc": ""
+    },
+    {
+      "title": "英雄赞歌（MV·张映哲）",
+      "artist": "",
+      "file": "mv_yingxiong.mp4",
+      "type": "mv",
+      "lrc": ""
     }
   ]
 }
