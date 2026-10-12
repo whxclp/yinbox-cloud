@@ -80,6 +80,7 @@
   .oitem .src{font-size:11px; padding:2px 6px; border-radius:5px; border:1px solid var(--line); color:var(--sub); flex:none;}
   .oitem .src.n{color:#7ee787; border-color:#7ee787;}
   .oitem .src.k{color:#79c0ff; border-color:#79c0ff;}
+  .oitem .src.b{color:#bc8cff; border-color:#bc8cff;}
   .oitem .meta{flex:1; min-width:0;}
   .oitem .t{font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .oitem .a{font-size:12px; color:var(--sub); margin-top:2px;}
@@ -248,16 +249,16 @@ function searchOnline(){
       }
       const wants = JSON.parse(localStorage.getItem('cloudWants')||'[]');
       box.innerHTML = j.playable.map(r=>{
-        const srcTxt = r.source==='netease' ? '网易' : '酷狗';
-        const srcCls = r.source==='netease' ? 'n' : 'k';
+        const srcTxt = r.source==='netease' ? '网易' : r.source==='kugou' ? '酷狗' : 'B站';
+        const srcCls = r.source==='netease' ? 'n' : r.source==='kugou' ? 'k' : 'b';
         const wanted = wants.some(w=>w.source===r.source && w.id===r.id);
         return '<div class="oitem">'
           + '<span class="src '+srcCls+'">'+srcTxt+'</span>'
-          + '<div class="meta"><div class="t">'+esc(r.title)+'</div><div class="a">'+esc(r.artist||'')+'</div></div>'
+          + '<div class="meta"><div class="t">'+esc(r.title)+'</div><div class="a">'+esc(r.artist||'')+(r.extra?' · '+esc(r.extra):'')+'</div></div>'
           + '<button class="play" onclick="tryOnline(this,\''+r.source+'\',\''+escJs(r.id)+'\')">试听</button>'
           + '<button class="'+(wanted?'wanted':'want')+'" onclick="wantAdd(this,\''+r.source+'\',\''+escJs(r.id)+'\')">'+(wanted?'已标记':'归队')+'</button>'
           + '</div>';
-      }).join('') + '<div class="tip">共 '+j.playable.length+' 个可播版本，已过滤 '+j.blocked.length+' 个VIP/失效。</div>';
+      }).join('') + '<div class="tip">共 '+j.playable.length+' 个可播版本，已过滤 '+j.blocked.length+' 个VIP/失效。B站为视频（含教学/翻唱/现场）。</div>';
     })
     .catch(e=>{
       box.innerHTML = '<div class="empty">搜索失败：'+esc(e.message)+'<br>电脑端需先启动搜索服务；手机端需配置云端接口。</div>';
