@@ -335,12 +335,17 @@ function loadOnlineLyric(src, id){
 }
 function wantAdd(btn, src, id){
   let w = JSON.parse(localStorage.getItem('cloudWants')||'[]');
-  if(!w.some(x=>x.source===src && x.id===id)){
+  const i = w.findIndex(x=>x.source===src && x.id===id);
+  if(i >= 0){
+    w.splice(i, 1);
+    btn.className = 'want';
+    btn.textContent = '归队';
+  } else {
     w.push({source:src, id:id});
-    localStorage.setItem('cloudWants', JSON.stringify(w));
     btn.className = 'wanted';
     btn.textContent = '已标记';
   }
+  localStorage.setItem('cloudWants', JSON.stringify(w));
 }
 function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function saveHist(kw){
