@@ -82,6 +82,7 @@
   #searchTop{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
   #searchTop .tt{font-size:20px; font-weight:bold;}
   #searchClose{font-size:16px; cursor:pointer; padding:8px 14px; color:var(--text); background:var(--btn); border:1px solid var(--line); border-radius:8px;}
+  #okw:focus{border-color:#ffd700 !important; box-shadow:0 0 16px rgba(255,215,0,.75) !important;}
   .oitem{
     display:flex; align-items:center; gap:8px; padding:8px 12px; margin-bottom:6px;
     background:var(--btn); border:1px solid var(--line); border-radius:10px;
@@ -176,7 +177,7 @@
     <div id="ohist" style="margin-bottom:8px;"></div>
     <div style="display:flex; gap:8px;">
       <input id="okw" placeholder="搜全网：歌名 / 歌手（回车搜索）" autocomplete="off"
-        style="flex:1;min-width:120px;background:var(--btn);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px 12px;font-size:17px;outline:none">
+        style="flex:1;min-width:120px;background:var(--btn);border:3px solid #ff8c00;color:var(--text);border-radius:10px;padding:9px 12px;font-size:17px;outline:none;box-shadow:0 0 10px rgba(255,140,0,.55)">
       <button onclick="searchOnline()" style="background:var(--btn);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 16px;font-size:16px;cursor:pointer;min-height:44px;white-space:nowrap">搜索</button>
     </div>
     <div id="oresults"></div>
