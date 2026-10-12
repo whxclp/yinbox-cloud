@@ -157,7 +157,7 @@
   <h1><span class="note">♪</span> 音盒 · 云端版</h1>
   <p>歌在云端，任何设备随时听 · 免注册 · 无广告</p>
   <div class="toolbar">
-    <input id="kw" placeholder="筛选本地歌单" autocomplete="off">
+    <input id="kw" placeholder="筛选本地歌单" autocomplete="off" style="display:none">
     <button id="favFilter" onclick="toggleFavFilter()">只看收藏</button>
     <button onclick="toggleOnline()" id="onlineBtn">网上搜歌</button>
   </div>
@@ -256,7 +256,7 @@ const SEARCH_API = localStorage.getItem('searchApi') || 'https://5b9f5db1.r27.cp
     const saved = JSON.parse(localStorage.getItem('cloudSearchResult')||'null');
     if(saved && saved.html){
       document.getElementById('oresults').innerHTML = saved.html;
-      document.getElementById('okw').value = saved.kw || '';
+      document.getElementById('okw').value = saved.kw || localStorage.getItem('cloudSearchKw')||'';
       document.getElementById('onlineSearch').style.display = 'block';
     }
   }catch(e){}
@@ -265,12 +265,13 @@ const SEARCH_API = localStorage.getItem('searchApi') || 'https://5b9f5db1.r27.cp
 function toggleOnline(){
   const el = document.getElementById('onlineSearch');
   el.style.display = el.style.display === 'block' ? 'none' : 'block';
-  if(el.style.display === 'block'){ renderHist(); document.getElementById('okw').focus(); }
+  if(el.style.display === 'block'){ renderHist(); const ok=document.getElementById('okw'); ok.value = ok.value || localStorage.getItem('cloudSearchKw')||''; ok.focus(); }
 }
 document.getElementById('okw').addEventListener('keydown', e=>{ if(e.key==='Enter') searchOnline(); });
 function searchOnline(){
   const kw = document.getElementById('okw').value.trim();
   const box = document.getElementById('oresults');
+  localStorage.setItem('cloudSearchKw', kw);
   if(!kw){ box.innerHTML = '<div class="empty">请输入歌名或歌手</div>'; return; }
   box.innerHTML = '<div class="empty">搜索中…（网易云+酷狗，自动过滤VIP）</div>';
   fetch(SEARCH_API + '/search?kw=' + encodeURIComponent(kw))
