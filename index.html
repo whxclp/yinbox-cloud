@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>音盒 · 云端版</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#161b22">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23121212'/%3E%3Ctext x='12' y='17' font-size='13' text-anchor='middle' fill='%23ffd93d' font-family='sans-serif'%3E%E2%99%AA%3C/text%3E%3C/svg%3E">
 <style>
   :root{
@@ -132,6 +137,11 @@
     background:rgba(13,17,23,.92); border:1px solid var(--line); border-radius:10px;
     padding:6px 12px; z-index:15; pointer-events:none; display:none;
   }
+  .lyric.plain{
+    pointer-events:auto; overflow-y:auto; max-height:38vh;
+    font-size:14px; line-height:1.8; padding:10px 16px;
+  }
+  .lyric.plain .lrcline{padding:1px 0;}
   @media (max-width:480px){
     .ctrls{gap:16px;}
     .ctrls .big{min-width:56px; height:46px; font-size:16px;}
@@ -181,6 +191,8 @@
   </div>
 </div>
 <script>
+// ===== PWA 注册 =====
+if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
 // ===== 数据 =====
 const INSTRUMENTS = ['二胡','唢呐','笛子','钢琴','小提琴','吉他','古筝','琵琶','大提琴','长笛','萨克斯','小号','手风琴','葫芦丝','埙','箫','扬琴','阮','口琴','陶笛'];
 let songs = [];        // 全量歌单（来自 songs.json）
@@ -274,6 +286,7 @@ function tryOnline(btn, src, id){
         audio.play().catch(()=>{});
         document.getElementById('nowTitle').textContent = '网上试听：'+(btn.closest('.oitem').querySelector('.t').textContent||'');
         document.getElementById('nowArtist').textContent = btn.closest('.oitem').querySelector('.a').textContent;
+        setMediaSession(document.getElementById('nowTitle').textContent, document.getElementById('nowArtist').textContent);
         document.getElementById('lyricBox').style.display='none';
         syncControls();
       } else { alert('该版本暂不可播'); }
@@ -327,6 +340,27 @@ function render(){
 }
 function esc(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
+// ===== 锁屏媒体控制（Media Session）=====
+function setMediaSession(title, artist){
+  if(!('mediaSession' in navigator)) return;
+  try{
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: title || '音盒',
+      artist: artist || '',
+      album: '音盒 · 云端版',
+    });
+    if(!navigator.mediaSession._hooked){
+      navigator.mediaSession.setActionHandler('play', ()=>{ if(cur>=0 && !playing) curMedia.play().catch(()=>{}); });
+      navigator.mediaSession.setActionHandler('pause', ()=>pauseNow());
+      navigator.mediaSession.setActionHandler('previoustrack', ()=>prevSong());
+      navigator.mediaSession.setActionHandler('nexttrack', ()=>nextSong());
+      navigator.mediaSession._hooked = true;
+    }
+  }catch(e){}
+}
+function setPlaybackState(p){
+  if('mediaSession' in navigator){ try{ navigator.mediaSession.playbackState = p; }catch(e){} }
+}
 // ===== 播放 =====
 function stopMedia(){
   audio.pause();
@@ -355,6 +389,7 @@ function playAt(i){
   curMedia.play().catch(e=>{ if(e.name!=='AbortError') document.getElementById('nowTitle').textContent='播放失败: '+e.name; });
   document.getElementById('nowTitle').textContent = s.title || s.file.split('/').pop();
   document.getElementById('nowArtist').textContent = s.artist || '';
+  setMediaSession(s.title || s.file.split('/').pop(), s.artist || '');
   showLyric(lrc, 0);
   curMedia.ontimeupdate = ()=> updateProg(lrc);
   curMedia.onended = ()=> nextSong(true);
@@ -362,7 +397,7 @@ function playAt(i){
   render();
 }
 let playing = false;
-function markPlaying(v){ playing = v; syncControls(); }
+function markPlaying(v){ playing = v; setPlaybackState(v?'playing':'paused'); syncControls(); }
 audio.addEventListener('play', ()=>{ markPlaying(true); });
 audio.addEventListener('pause', ()=>{ markPlaying(false); });
 audio.addEventListener('ended', ()=>{ markPlaying(false); });
@@ -387,6 +422,8 @@ function stopSong(){
   stopMedia();
   document.getElementById('nowTitle').textContent = '-- 未播放 --';
   document.getElementById('nowArtist').textContent = '';
+  setMediaSession('', '');
+  setPlaybackState('none');
   document.getElementById('lyricBox').style.display = 'none';
   curEl.textContent = '0:00';
   durEl.textContent = '0:00';
@@ -464,8 +501,12 @@ function toggleFavFilter(){
 function parseLrc(text){
   text = String(text||'');
   if(!text.trim()) return null;
-  const out = [];
   const re = /\[(\d+):(\d+(?:\.\d+)?)\]/g;
+  if(!re.test(text)){
+    return {plain: text.split(/\n/).map(s=>s.trim()).filter(Boolean)};
+  }
+  re.lastIndex = 0;
+  const out = [];
   let m, last = 0, lines = text.split(/\n/);
   for(const ln of lines){
     let t = null;
@@ -479,6 +520,15 @@ function parseLrc(text){
 function showLyric(lrc, t){
   const box = document.getElementById('lyricBox');
   if(!lrc || curMedia === mvPlayer){ box.style.display='none'; return; }
+  if(lrc.plain){
+    box.classList.add('plain');
+    box.style.textAlign = 'center';
+    box.innerHTML = lrc.plain.map(s=>'<div class="lrcline">'+s+'</div>').join('');
+    box.style.display = 'block';
+    box.scrollTop = 0;
+    return;
+  }
+  box.classList.remove('plain');
   let line = '';
   for(let i=lrc.length-1;i>=0;i--){ if(lrc[i].t <= t+0.2){ line = lrc[i].text; break; } }
   if(line){ box.textContent = line; box.style.display = 'block'; }
