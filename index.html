@@ -77,8 +77,11 @@
   }
   .song .heart.on{color:#ff4d4f;}
   /* ===== 网上搜歌 ===== */
-  #onlineSearch{margin-top:10px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px;}
-  #onlineSearch .tip{font-size:12px; color:var(--sub); margin:8px 2px 0; line-height:1.7;}
+  #onlineSearch{position:fixed; top:0; left:0; right:0; bottom:0; background:var(--bg); z-index:100; padding:14px; overflow-y:auto; display:none;}
+  #onlineSearch .tip{font-size:13px; color:var(--sub); margin:8px 2px 0; line-height:1.7;}
+  #searchTop{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  #searchTop .tt{font-size:20px; font-weight:bold;}
+  #searchClose{font-size:16px; cursor:pointer; padding:8px 14px; color:var(--text); background:var(--btn); border:1px solid var(--line); border-radius:8px;}
   .oitem{
     display:flex; align-items:center; gap:8px; padding:8px 12px; margin-bottom:6px;
     background:var(--btn); border:1px solid var(--line); border-radius:10px;
@@ -154,15 +157,17 @@
   <h1><span class="note">♪</span> 音盒 · 云端版</h1>
   <p>歌在云端，任何设备随时听 · 免注册 · 无广告</p>
   <div class="toolbar">
-    <input id="kw" placeholder="筛选歌名 / 歌手" autocomplete="off">
+    <input id="kw" placeholder="筛选本地歌单" autocomplete="off">
     <button id="favFilter" onclick="toggleFavFilter()">只看收藏</button>
     <button onclick="toggleOnline()" id="onlineBtn">网上搜歌</button>
   </div>
-  <div id="onlineSearch" style="display:none">
+  <div id="onlineSearch">
+    <div id="searchTop"><span class="tt">搜全网</span><span id="searchClose" onclick="toggleOnline()">关闭</span></div>
+    <div id="ohist" style="margin-bottom:8px;"></div>
     <div style="display:flex; gap:8px;">
-      <input id="okw" placeholder="搜全网：歌名 / 歌手" autocomplete="off"
-        style="flex:1;min-width:120px;background:var(--btn);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 12px;font-size:16px;outline:none">
-      <button onclick="searchOnline()" style="background:var(--btn);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 14px;font-size:15px;cursor:pointer;min-height:44px;white-space:nowrap">搜网上</button>
+      <input id="okw" placeholder="搜全网：歌名 / 歌手（回车搜索）" autocomplete="off"
+        style="flex:1;min-width:120px;background:var(--btn);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px 12px;font-size:17px;outline:none">
+      <button onclick="searchOnline()" style="background:var(--btn);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 16px;font-size:16px;cursor:pointer;min-height:44px;white-space:nowrap">搜索</button>
     </div>
     <div id="oresults"></div>
     <div class="tip">试听 = 直接播放。归队 = 标记要加入歌单，把标记清单发给豆包后批量下载。VIP/不能播的已自动过滤。</div>
@@ -246,10 +251,23 @@ function applyFilter(){
 }
 // ===== 网上搜歌 =====
 const SEARCH_API = localStorage.getItem('searchApi') || 'https://5b9f5db1.r27.cpolar.top';
+(function(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('cloudSearchResult')||'null');
+    if(saved && saved.html){
+      document.getElementById('oresults').innerHTML = saved.html;
+      document.getElementById('okw').value = saved.kw || '';
+      document.getElementById('onlineSearch').style.display = 'block';
+    }
+  }catch(e){}
+  renderHist();
+})();
 function toggleOnline(){
   const el = document.getElementById('onlineSearch');
   el.style.display = el.style.display === 'block' ? 'none' : 'block';
+  if(el.style.display === 'block'){ renderHist(); document.getElementById('okw').focus(); }
 }
+document.getElementById('okw').addEventListener('keydown', e=>{ if(e.key==='Enter') searchOnline(); });
 function searchOnline(){
   const kw = document.getElementById('okw').value.trim();
   const box = document.getElementById('oresults');
@@ -274,6 +292,8 @@ function searchOnline(){
           + '<button class="'+(wanted?'wanted':'want')+'" onclick="wantAdd(this,\''+r.source+'\',\''+escJs(r.id)+'\')">'+(wanted?'已标记':'归队')+'</button>'
           + '</div>';
       }).join('') + '<div class="tip">共 '+j.playable.length+' 个可播版本，已过滤 '+j.blocked.length+' 个VIP/失效。B站为视频（含教学/翻唱/现场）。</div>';
+      localStorage.setItem('cloudSearchResult', JSON.stringify({kw: kw, html: box.innerHTML}));
+      saveHist(kw); renderHist();
     })
     .catch(e=>{
       box.innerHTML = '<div class="empty">搜索失败：'+esc(e.message)+'<br>电脑端需先启动搜索服务；手机端需配置云端接口。</div>';
@@ -306,6 +326,27 @@ function wantAdd(btn, src, id){
   }
 }
 function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function saveHist(kw){
+  let h = JSON.parse(localStorage.getItem('cloudSearchHist')||'[]');
+  h = [kw].concat(h.filter(x=>x!==kw)).slice(0,10);
+  localStorage.setItem('cloudSearchHist', JSON.stringify(h));
+}
+function renderHist(){
+  const el = document.getElementById('ohist');
+  if(!el) return;
+  const h = JSON.parse(localStorage.getItem('cloudSearchHist')||'[]');
+  if(!h.length){ el.innerHTML=''; return; }
+  el.innerHTML = '<span style="font-size:12px;color:var(--sub);margin-right:4px;">历史：</span>' + h.map(k=>
+    '<span style="display:inline-block;background:var(--btn);border:1px solid var(--line);border-radius:12px;padding:3px 8px;font-size:13px;margin:2px;cursor:pointer;" onclick="histSearch(\''+escJs(k)+'\')">'+esc(k)+'<span style="margin-left:5px;color:#f66;cursor:pointer;" onclick="event.stopPropagation();histDel(\''+escJs(k)+'\')">×</span></span>'
+  ).join('');
+}
+function histSearch(kw){ document.getElementById('okw').value = kw; searchOnline(); }
+function histDel(kw){
+  let h = JSON.parse(localStorage.getItem('cloudSearchHist')||'[]');
+  h = h.filter(x=>x!==kw);
+  localStorage.setItem('cloudSearchHist', JSON.stringify(h));
+  renderHist();
+}
 function render(){
   const cats = {song:[], instrument:[], mv:[]};
   shown.forEach(s=>{ cats[classify(s)].push(s); });
