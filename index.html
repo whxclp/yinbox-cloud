@@ -476,20 +476,27 @@ function fmt(sec){
 }
 (function(){
   const bar = document.getElementById('progBar');
-  function seekAt(e){
-    if(!curMedia.duration) return;
+  function calcP(clientX){
     const r = bar.getBoundingClientRect();
-    const p = Math.min(1, Math.max(0, (e.clientX-r.left)/r.width));
+    return Math.min(1, Math.max(0, (clientX-r.left)/r.width));
+  }
+  function preview(p){
+    if(!curMedia.duration) return;
+    curEl.textContent = fmt(p * curMedia.duration);
+    fillEl.style.width = (p*100)+'%'; knobEl.style.left = (p*100)+'%';
+  }
+  function applySeek(p){
+    if(!curMedia.duration) return;
     curMedia.currentTime = p * curMedia.duration;
   }
-  bar.addEventListener('click', seekAt);
-  let dragging = false;
-  bar.addEventListener('mousedown', e=>{ dragging = true; seekAt(e); e.preventDefault(); });
-  window.addEventListener('mousemove', e=>{ if(dragging) seekAt(e); });
-  window.addEventListener('mouseup', ()=>{ dragging = false; });
-  bar.addEventListener('touchstart', e=>{ dragging = true; seekAt(e.touches[0]); }, {passive:false});
-  bar.addEventListener('touchmove', e=>{ if(dragging){ seekAt(e.touches[0]); e.preventDefault(); } }, {passive:false});
-  bar.addEventListener('touchend', ()=>{ dragging = false; });
+  bar.addEventListener('click', e=> applySeek(calcP(e.clientX)));
+  let dragging = false, dragP = 0;
+  bar.addEventListener('mousedown', e=>{ dragging = true; dragP = calcP(e.clientX); preview(dragP); e.preventDefault(); });
+  window.addEventListener('mousemove', e=>{ if(dragging){ dragP = calcP(e.clientX); preview(dragP); } });
+  window.addEventListener('mouseup', ()=>{ if(dragging){ dragging = false; applySeek(dragP); } });
+  bar.addEventListener('touchstart', e=>{ dragging = true; dragP = calcP(e.touches[0].clientX); preview(dragP); }, {passive:false});
+  bar.addEventListener('touchmove', e=>{ if(dragging){ dragP = calcP(e.touches[0].clientX); preview(dragP); e.preventDefault(); } }, {passive:false});
+  bar.addEventListener('touchend', ()=>{ if(dragging){ dragging = false; applySeek(dragP); } });
 })();
 
 // ===== 音量 =====
