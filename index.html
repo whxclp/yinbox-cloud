@@ -70,6 +70,26 @@
     align-items:center; justify-content:center;
   }
   .song .heart.on{color:#ff4d4f;}
+  /* ===== 网上搜歌 ===== */
+  #onlineSearch{margin-top:10px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px;}
+  #onlineSearch .tip{font-size:12px; color:var(--sub); margin:8px 2px 0; line-height:1.7;}
+  .oitem{
+    display:flex; align-items:center; gap:8px; padding:8px 12px; margin-bottom:6px;
+    background:var(--btn); border:1px solid var(--line); border-radius:10px;
+  }
+  .oitem .src{font-size:11px; padding:2px 6px; border-radius:5px; border:1px solid var(--line); color:var(--sub); flex:none;}
+  .oitem .src.n{color:#7ee787; border-color:#7ee787;}
+  .oitem .src.k{color:#79c0ff; border-color:#79c0ff;}
+  .oitem .meta{flex:1; min-width:0;}
+  .oitem .t{font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .oitem .a{font-size:12px; color:var(--sub); margin-top:2px;}
+  .oitem button{
+    flex:none; min-height:36px; padding:0 12px; border-radius:8px; cursor:pointer;
+    font-size:14px; font-weight:bold; border:1px solid var(--line);
+  }
+  .oitem .play{background:var(--acc); color:#111; border-color:var(--acc);}
+  .oitem .want{background:var(--btn-hi); color:var(--text);}
+  .oitem .wanted{background:transparent; color:var(--sub); border-style:dashed;}
   .empty{padding:40px 20px; text-align:center; color:var(--sub); font-size:14px; line-height:1.9;}
   /* ===== MV 画面区 ===== */
   #mvWrap{
@@ -124,6 +144,16 @@
   <div class="toolbar">
     <input id="kw" placeholder="筛选歌名 / 歌手" autocomplete="off">
     <button id="favFilter" onclick="toggleFavFilter()">只看收藏</button>
+    <button onclick="toggleOnline()" id="onlineBtn">网上搜歌</button>
+  </div>
+  <div id="onlineSearch" style="display:none">
+    <div style="display:flex; gap:8px;">
+      <input id="okw" placeholder="搜全网：歌名 / 歌手" autocomplete="off"
+        style="flex:1;min-width:120px;background:var(--btn);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 12px;font-size:16px;outline:none">
+      <button onclick="searchOnline()" style="background:var(--btn);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 14px;font-size:15px;cursor:pointer;min-height:44px;white-space:nowrap">搜网上</button>
+    </div>
+    <div id="oresults"></div>
+    <div class="tip">试听 = 直接播放。归队 = 标记要加入歌单，把标记清单发给豆包后批量下载。VIP/不能播的已自动过滤。</div>
   </div>
 </header>
 <main id="list"><div class="empty">正在加载歌单…</div></main>
@@ -198,6 +228,67 @@ function applyFilter(){
   });
   render();
 }
+// ===== 网上搜歌 =====
+const SEARCH_API = localStorage.getItem('searchApi') || 'http://127.0.0.1:8091';
+function toggleOnline(){
+  const el = document.getElementById('onlineSearch');
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+function searchOnline(){
+  const kw = document.getElementById('okw').value.trim();
+  const box = document.getElementById('oresults');
+  if(!kw){ box.innerHTML = '<div class="empty">请输入歌名或歌手</div>'; return; }
+  box.innerHTML = '<div class="empty">搜索中…（网易云+酷狗，自动过滤VIP）</div>';
+  fetch(SEARCH_API + '/search?kw=' + encodeURIComponent(kw))
+    .then(r=>r.json())
+    .then(j=>{
+      if(!j.playable || !j.playable.length){
+        box.innerHTML = '<div class="empty">没有可播放的版本（VIP/失效已过滤）。<br>把歌名告诉我，我人工搜抖音/视频号找好版本。</div>';
+        return;
+      }
+      const wants = JSON.parse(localStorage.getItem('cloudWants')||'[]');
+      box.innerHTML = j.playable.map(r=>{
+        const srcTxt = r.source==='netease' ? '网易' : '酷狗';
+        const srcCls = r.source==='netease' ? 'n' : 'k';
+        const wanted = wants.some(w=>w.source===r.source && w.id===r.id);
+        return '<div class="oitem">'
+          + '<span class="src '+srcCls+'">'+srcTxt+'</span>'
+          + '<div class="meta"><div class="t">'+esc(r.title)+'</div><div class="a">'+esc(r.artist||'')+'</div></div>'
+          + '<button class="play" onclick="tryOnline(this,\''+r.source+'\',\''+escJs(r.id)+'\')">试听</button>'
+          + '<button class="'+(wanted?'wanted':'want')+'" onclick="wantAdd(this,\''+r.source+'\',\''+escJs(r.id)+'\')">'+(wanted?'已标记':'归队')+'</button>'
+          + '</div>';
+      }).join('') + '<div class="tip">共 '+j.playable.length+' 个可播版本，已过滤 '+j.blocked.length+' 个VIP/失效。</div>';
+    })
+    .catch(e=>{
+      box.innerHTML = '<div class="empty">搜索失败：'+esc(e.message)+'<br>电脑端需先启动搜索服务；手机端需配置云端接口。</div>';
+    });
+}
+function tryOnline(btn, src, id){
+  stopMedia();
+  fetch(SEARCH_API + '/play?src='+src+'&id='+encodeURIComponent(id))
+    .then(r=>r.json())
+    .then(j=>{
+      if(j.url){
+        audio.src = j.url;
+        audio.play().catch(()=>{});
+        document.getElementById('nowTitle').textContent = '网上试听：'+(btn.closest('.oitem').querySelector('.t').textContent||'');
+        document.getElementById('nowArtist').textContent = btn.closest('.oitem').querySelector('.a').textContent;
+        document.getElementById('lyricBox').style.display='none';
+        syncControls();
+      } else { alert('该版本暂不可播'); }
+    })
+    .catch(e=>alert('获取播放链接失败：'+e.message));
+}
+function wantAdd(btn, src, id){
+  let w = JSON.parse(localStorage.getItem('cloudWants')||'[]');
+  if(!w.some(x=>x.source===src && x.id===id)){
+    w.push({source:src, id:id});
+    localStorage.setItem('cloudWants', JSON.stringify(w));
+    btn.className = 'wanted';
+    btn.textContent = '已标记';
+  }
+}
+function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function render(){
   const cats = {song:[], instrument:[], mv:[]};
   shown.forEach(s=>{ cats[classify(s)].push(s); });
