@@ -312,10 +312,26 @@ function tryOnline(btn, src, id){
         document.getElementById('nowArtist').textContent = btn.closest('.oitem').querySelector('.a').textContent;
         setMediaSession(document.getElementById('nowTitle').textContent, document.getElementById('nowArtist').textContent);
         document.getElementById('lyricBox').style.display='none';
+        loadOnlineLyric(src, id);
         syncControls();
       } else { alert('该版本暂不可播'); }
     })
     .catch(e=>alert('获取播放链接失败：'+e.message));
+}
+function loadOnlineLyric(src, id){
+  const box = document.getElementById('lyricBox');
+  if(src !== 'netease'){ box.style.display='none'; return; }
+  fetch(SEARCH_API + '/lyric?src='+src+'&id='+encodeURIComponent(id))
+    .then(r=>r.json())
+    .then(j=>{
+      if(j && j.lrc){
+        const lrc = parseLrc(j.lrc);
+        if(!lrc){ box.style.display='none'; return; }
+        audio.ontimeupdate = ()=> updateProg(lrc);
+        showLyric(lrc, audio.currentTime||0);
+      } else { box.style.display='none'; }
+    })
+    .catch(()=>{ box.style.display='none'; });
 }
 function wantAdd(btn, src, id){
   let w = JSON.parse(localStorage.getItem('cloudWants')||'[]');
