@@ -107,6 +107,8 @@
   #list.fav-grid .heart{position:static; margin-top:6px; font-size:22px;}
   #list.fav-grid .tag{display:none;}
   .oitem .want{background:var(--btn-hi); color:var(--text);}
+  .oitem.playing{background:var(--btn-hi);}
+  .oitem.playing .play{background:var(--accent); color:#fff;}
   .oitem .wanted{background:transparent; color:var(--sub); border-style:dashed;}
   .empty{padding:40px 20px; text-align:center; color:var(--sub); font-size:14px; line-height:1.9;}
   /* ===== MV 画面区 ===== */
@@ -217,6 +219,7 @@ let cur = -1;          // 当前播放歌在 shown 中的下标
 let mode = 0;          // 0顺序 1循环 2单曲 3随机
 const MODES = ['顺序','循环','单曲','随机'];
 let favFilter = false;
+let curOnline = null;
 let favs = {};
 try{ favs = JSON.parse(localStorage.getItem('cloudFavs')||'{}'); }catch(e){ favs = {}; }
 
@@ -264,6 +267,7 @@ const SEARCH_API = localStorage.getItem('searchApi') || 'https://5b9f5db1.r27.cp
     const saved = JSON.parse(localStorage.getItem('cloudSearchResult')||'null');
     if(saved && saved.html){
       document.getElementById('oresults').innerHTML = saved.html;
+      document.querySelectorAll('#oresults .oitem.playing').forEach(el=>el.classList.remove('playing'));
       document.getElementById('okw').value = saved.kw || localStorage.getItem('cloudSearchKw')||'';
       document.getElementById('onlineSearch').style.display = 'block';
     }
@@ -289,12 +293,13 @@ function searchOnline(){
         box.innerHTML = '<div class="empty">没有可播放的版本（VIP/失效已过滤）。<br>把歌名告诉我，我人工搜抖音/视频号找好版本。</div>';
         return;
       }
-      const wants = JSON.parse(localStorage.getItem('cloudWants')||'[]');
+        const wants = JSON.parse(localStorage.getItem('cloudWants')||'[]');
       box.innerHTML = j.playable.map(r=>{
         const srcTxt = r.source==='netease' ? '网易' : r.source==='kugou' ? '酷狗' : 'B站';
         const srcCls = r.source==='netease' ? 'n' : r.source==='kugou' ? 'k' : 'b';
         const wanted = wants.some(w=>w.source===r.source && w.id===r.id);
-        return '<div class="oitem">'
+        const playing = curOnline && curOnline.src===r.source && curOnline.id===r.id;
+        return '<div class="oitem'+(playing?' playing':'')+'">'
           + '<span class="src '+srcCls+'">'+srcTxt+'</span>'
           + '<div class="meta"><div class="t">'+esc(r.title)+'</div><div class="a">'+esc(r.artist||'')+(r.extra?' · '+esc(r.extra):'')+'</div></div>'
           + '<button class="play" onclick="tryOnline(this,\''+r.source+'\',\''+escJs(r.id)+'\')">试听</button>'
@@ -310,6 +315,9 @@ function searchOnline(){
 }
 function tryOnline(btn, src, id){
   stopMedia();
+  curOnline = {src:src, id:id};
+  document.querySelectorAll('#oresults .oitem.playing').forEach(el=>el.classList.remove('playing'));
+  if(btn){ const row = btn.closest('.oitem'); if(row) row.classList.add('playing'); }
   fetch(SEARCH_API + '/play?src='+src+'&id='+encodeURIComponent(id))
     .then(r=>r.json())
     .then(j=>{
