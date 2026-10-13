@@ -173,6 +173,7 @@
     <input id="kw" placeholder="筛选本地歌单" autocomplete="off" style="display:none">
     <button id="favFilter" onclick="toggleFavFilter()">只看收藏（三排）</button>
     <button onclick="favAll()" title="把歌单里所有歌曲点亮红心，便于在“只看收藏”里三排浏览">一键全部收藏</button>
+    <button onclick="favClearAll()" title="取消全部收藏，红心全部熄灭（收藏记录只在本设备）">取消全部收藏</button>
     <button onclick="favExport()" title="复制收藏码，到另一台设备可导入">导出收藏</button>
     <button onclick="favImport()" title="粘贴另一台设备导出的收藏码">导入收藏</button>
     <button onclick="toggleOnline()" id="onlineBtn">网上搜歌</button>
@@ -671,6 +672,15 @@ function favAll(){
   localStorage.setItem('cloudFavs', JSON.stringify(favs));
   alert('已全部收藏，共 '+songs.length+' 首。现在点“只看收藏（三排）”即可三排浏览。');
   applyFilter();
+}
+function favClearAll(){
+  const n = Object.keys(favs).length;
+  if(!n){ alert('本设备还没有收藏的歌曲，无需取消。'); return; }
+  if(!confirm('确定取消全部收藏吗？（红心将全部熄灭，只影响本设备收藏记录，不影响歌单）')) return;
+  favs = {};
+  localStorage.setItem('cloudFavs', JSON.stringify(favs));
+  applyFilter();
+  alert('已取消全部收藏。点“一键全部收藏”可随时恢复。');
 }
 function favExport(){
   const n = Object.keys(favs).length;
