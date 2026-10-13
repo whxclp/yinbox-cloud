@@ -403,7 +403,7 @@ function render(){
     html = '<div class="empty">歌单还是空的。<br>把歌曲文件放进 <b>songs/</b> 文件夹，在 songs.json 里登记即可（详见 README）。</div>';
   } else if(!shown.length){
     html = favFilter
-      ? '<div class="empty">本设备还没有收藏的歌曲。<br>点任意歌曲右侧的 ♥ 收藏后，会以三排网格出现在这里。<br>收藏只保存在当前设备（手机/电脑各自独立）。</div>'
+      ? '<div class="empty">本设备还没有收藏的歌曲。<br>点上方「一键全部收藏」点亮全部，再点红♥ 取消不要的。<br>收藏只保存在当前设备（手机/电脑各自独立）。</div>'
       : '<div class="empty">没有符合筛选条件的歌曲。</div>';
   } else {
     const sec = (items, label, tagText, tagClass)=>{
@@ -420,7 +420,7 @@ function render(){
             <div class="a">${esc(it.artist||'')}</div>
           </span>
           ${tag}
-          <button class="heart${fav?' on':''}" onclick="event.stopPropagation();toggleFav(it.file,it.title,this)" title="收藏">${fav?'♥':'♡'}</button>
+          ${fav?`<button class="heart on" onclick="event.stopPropagation();toggleFav(it.file,it.title,this)" title="取消收藏">♥</button>`:''}
         </div>`;
       });
       return s;
@@ -674,7 +674,7 @@ function favAll(){
 }
 function favExport(){
   const n = Object.keys(favs).length;
-  if(!n){ alert('本设备还没有收藏的歌曲。点歌曲右侧的 ♥ 收藏后这里才有内容。'); return; }
+  if(!n){ alert('本设备还没有收藏的歌曲。点上方「一键全部收藏」收藏后这里才有内容。'); return; }
   const code = 'YINFAV1:' + JSON.stringify(favs);
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(code).then(()=>{
