@@ -456,6 +456,19 @@ function setPlaybackState(p){
   if('mediaSession' in navigator){ try{ navigator.mediaSession.playbackState = p; }catch(e){} }
 }
 // ===== 播放 =====
+function loadMedia(media, f){
+  // 统一先试 songs/ 子目录，404 则回退仓库根目录（兼容旧文件在根目录的历史布局）
+  let tryRoot = false;
+  const setSrc = ()=>{ media.src = (tryRoot ? '' : 'songs/') + encodeURI(f); };
+  media.onerror = ()=>{
+    if(!tryRoot){
+      tryRoot = true;
+      setSrc();
+      if(!media.paused) media.play().catch(()=>{});
+    }
+  };
+  setSrc();
+}
 function stopMedia(){
   audio.pause();
   audio.removeAttribute('src');
@@ -472,11 +485,11 @@ function playAt(i){
   stopMedia();
   if(s.type === 'mv'){
     curMedia = mvPlayer;
-    mvPlayer.src = encodeURI(s.file);
+    loadMedia(mvPlayer, s.file);
     mvWrap.style.display = 'block';
   } else {
     curMedia = audio;
-    audio.src = encodeURI(s.file);
+    loadMedia(audio, s.file);
   }
   const lrc = parseLrc(s.lrc||'');
   curMedia.onloadedmetadata = ()=>{ durEl.textContent = fmt(curMedia.duration); };
