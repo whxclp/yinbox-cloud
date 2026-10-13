@@ -51,7 +51,7 @@
   }
   .group-title::before{content:''; width:4px; height:14px; background:var(--acc); border-radius:2px; display:inline-block;}
   .song{
-    display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:5px;
+    display:flex; align-items:center; gap:7px; padding:7px 10px; margin-bottom:4px;
     background:var(--panel); border:1px solid var(--line); border-radius:8px; cursor:pointer;
   }
   .song:active{background:var(--btn-hi);}
@@ -73,8 +73,8 @@
   .song .tag.p{color:#ffb86c; border-color:#ffb86c;}
   .song .tag.e{color:#ff7ab2; border-color:#ff7ab2;}
   .song .heart{
-    flex:none; width:32px; height:32px; border-radius:50%; font-size:17px; line-height:1;
-    background:transparent; border:none; color:var(--sub); cursor:pointer; display:flex;
+    flex:none; width:auto; height:auto; padding:5px 3px; font-size:17px; line-height:1;
+    background:transparent; border:none; color:var(--sub); cursor:pointer; display:inline-flex;
     align-items:center; justify-content:center;
   }
   .song .heart.on{color:#ff4d4f;}
@@ -101,9 +101,9 @@
     font-size:14px; font-weight:bold; border:1px solid var(--line);
   }
   .oitem .play{background:var(--acc); color:#111; border-color:var(--acc);}
-  #list.fav-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding-top:4px;}
+  #list.fav-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding-top:4px;}
   #list.fav-grid .group-title{grid-column:1/-1;}
-  #list.fav-grid .song{flex-direction:row; align-items:center; text-align:left; padding:9px 8px; border-radius:8px; gap:6px; min-width:0;}
+  #list.fav-grid .song{flex-direction:row; align-items:center; text-align:left; padding:8px 6px; border-radius:8px; gap:5px; min-width:0;}
   #list.fav-grid .idx{display:none;}
   #list.fav-grid .t{font-size:14px; font-weight:bold; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
   #list.fav-grid .a{font-size:11px; color:var(--sub); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
