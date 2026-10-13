@@ -170,6 +170,8 @@
   <div class="toolbar">
     <input id="kw" placeholder="筛选本地歌单" autocomplete="off" style="display:none">
     <button id="favFilter" onclick="toggleFavFilter()">只看收藏（三排）</button>
+    <button onclick="favExport()" title="复制收藏码，到另一台设备可导入">导出收藏</button>
+    <button onclick="favImport()" title="粘贴另一台设备导出的收藏码">导入收藏</button>
     <button onclick="toggleOnline()" id="onlineBtn">网上搜歌</button>
   </div>
   <div id="onlineSearch">
@@ -286,7 +288,7 @@ function searchOnline(){
   const box = document.getElementById('oresults');
   localStorage.setItem('cloudSearchKw', kw);
   if(!kw){ box.innerHTML = '<div class="empty">请输入歌名或歌手</div>'; return; }
-  box.innerHTML = '<div class="empty">搜索中…（网易云+酷狗，自动过滤VIP）</div>';
+  box.innerHTML = '<div class="empty">搜索中…（网易云+酷狗+QQ+B站，自动过滤VIP）</div>';
   fetch(SEARCH_API + '/search?kw=' + encodeURIComponent(kw))
     .then(r=>r.json())
     .then(j=>{
@@ -296,8 +298,8 @@ function searchOnline(){
       }
         const wants = JSON.parse(localStorage.getItem('cloudWants')||'[]');
       box.innerHTML = j.playable.map(r=>{
-        const srcTxt = r.source==='netease' ? '网易' : r.source==='kugou' ? '酷狗' : 'B站';
-        const srcCls = r.source==='netease' ? 'n' : r.source==='kugou' ? 'k' : 'b';
+        const srcTxt = r.source==='netease' ? '网易' : r.source==='kugou' ? '酷狗' : r.source==='qq' ? 'QQ' : 'B站';
+        const srcCls = r.source==='netease' ? 'n' : r.source==='kugou' ? 'k' : r.source==='qq' ? 'q' : 'b';
         const wanted = wants.some(w=>w.source===r.source && w.id===r.id);
         const playing = curOnline && curOnline.src===r.source && curOnline.id===r.id;
         return '<div class="oitem'+(playing?' playing':'')+'">'
@@ -306,7 +308,7 @@ function searchOnline(){
           + '<button class="play" onclick="tryOnline(this,\''+r.source+'\',\''+escJs(r.id)+'\')">试听</button>'
           + '<button class="'+(wanted?'wanted':'want')+'" onclick="wantAdd(this,\''+r.source+'\',\''+escJs(r.id)+'\')">'+(wanted?'已标记':'归队')+'</button>'
           + '</div>';
-      }).join('') + '<div class="tip">共 '+j.playable.length+' 个可播版本，已过滤 '+j.blocked.length+' 个VIP/失效。B站为视频（含教学/翻唱/现场）。</div>';
+      }).join('') + '<div class="tip">共 '+j.playable.length+' 个可播版本，已过滤 '+j.blocked.length+' 个VIP/失效。QQ为官方正版源，网易云/酷狗为正版标注；B站为视频（含教学/翻唱/现场）。智能排序：歌名歌手全匹配的排最前。</div>';
       localStorage.setItem('cloudSearchResult', JSON.stringify({kw: kw, html: box.innerHTML}));
       saveHist(kw); renderHist();
     })
@@ -395,7 +397,9 @@ function render(){
   if(!songs.length){
     html = '<div class="empty">歌单还是空的。<br>把歌曲文件放进 <b>songs/</b> 文件夹，在 songs.json 里登记即可（详见 README）。</div>';
   } else if(!shown.length){
-    html = '<div class="empty">没有符合筛选条件的歌曲。</div>';
+    html = favFilter
+      ? '<div class="empty">本设备还没有收藏的歌曲。<br>点任意歌曲右侧的 ♥ 收藏后，会以三排网格出现在这里。<br>收藏只保存在当前设备（手机/电脑各自独立）。</div>'
+      : '<div class="empty">没有符合筛选条件的歌曲。</div>';
   } else {
     const sec = (items, label, tagText, tagClass)=>{
       if(!items.length) return '';
@@ -600,6 +604,31 @@ function toggleFavFilter(){
   favFilter = !favFilter;
   document.getElementById('favFilter').classList.toggle('on', favFilter);
   applyFilter();
+}
+function favExport(){
+  const n = Object.keys(favs).length;
+  if(!n){ alert('本设备还没有收藏的歌曲。点歌曲右侧的 ♥ 收藏后这里才有内容。'); return; }
+  const code = 'YINFAV1:' + JSON.stringify(favs);
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(()=>{
+      alert('已复制收藏码（'+n+' 首）。在另一台设备点“导入收藏”粘贴即可同步。');
+    }).catch(()=>{ prompt('复制下面这段收藏码（'+n+' 首），到另一台设备点“导入收藏”粘贴：', code); });
+  } else {
+    prompt('复制下面这段收藏码（'+n+' 首），到另一台设备点“导入收藏”粘贴：', code);
+  }
+}
+function favImport(){
+  const raw = prompt('粘贴另一台设备导出的收藏码（YINFAV1: 开头）：');
+  if(!raw) return;
+  if(raw.indexOf('YINFAV1:') !== 0){ alert('格式不对：需要 YINFAV1: 开头的收藏码'); return; }
+  try{
+    const j = JSON.parse(raw.slice(8));
+    if(typeof j !== 'object' || j === null) throw new Error('内容不对');
+    favs = j;
+    localStorage.setItem('cloudFavs', JSON.stringify(favs));
+    applyFilter();
+    alert('导入完成，共 '+Object.keys(favs).length+' 首收藏。');
+  }catch(e){ alert('解析失败：'+e.message); }
 }
 
 // ===== 歌词 =====
