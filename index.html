@@ -70,6 +70,8 @@
   }
   .song .tag.i{color:var(--acc); border-color:var(--acc);}
   .song .tag.m{color:#7ee787; border-color:#7ee787;}
+  .song .tag.p{color:#ffb86c; border-color:#ffb86c;}
+  .song .tag.e{color:#ff7ab2; border-color:#ff7ab2;}
   .song .heart{
     flex:none; width:36px; height:36px; border-radius:50%; font-size:18px; line-height:1;
     background:transparent; border:none; color:var(--sub); cursor:pointer; display:flex;
@@ -251,13 +253,15 @@ function loadSongs(){
 function classify(s){
   if(s && s.type === 'mv') return 'mv';
   const raw = String(s.title||'') + ' ' + String(s.artist||'');
+  if(raw.includes('蒲剧')) return 'puju';
+  if(raw.includes('二人转')) return 'errenzhuan';
   for(const i of INSTRUMENTS){ if(raw.includes(i)) return 'instrument'; }
   return 'song';
 }
 function applyFilter(){
   const kw = (document.getElementById('kw').value||'').trim().toLowerCase();
   shown = songs.filter(s=>{
-    if(favFilter && !favs[s.file]) return false;
+    if(favFilter && !favs[s.file] && !favs[s.title]) return false;
     if(!kw) return true;
     return (String(s.title||'')+' '+String(s.artist||'')).toLowerCase().includes(kw);
   });
@@ -389,7 +393,7 @@ function histDel(kw){
   renderHist();
 }
 function render(){
-  const cats = {song:[], instrument:[], mv:[]};
+  const cats = {song:[], instrument:[], puju:[], errenzhuan:[], mv:[]};
   shown.forEach(s=>{ cats[classify(s)].push(s); });
   const st = document.getElementById('stat');
   let html = '';
@@ -406,7 +410,7 @@ function render(){
       let s = '<div class="group-title">'+label+'（'+items.length+'）</div>';
       items.forEach((it,i)=>{
         const isPlaying = cur>=0 && shown[cur]===it;
-        const fav = !!favs[it.file];
+        const fav = !!favs[it.file] || !!favs[it.title];
         const tag = tagText ? `<span class="tag ${tagClass}">${tagText}</span>` : '';
         s += `<div class="song${isPlaying?' playing':''}" onclick="playAt(${shown.indexOf(it)})" title="点击播放">
           <span class="idx">${isPlaying?'▶':shown.indexOf(it)+1}</span>
@@ -415,13 +419,15 @@ function render(){
             <div class="a">${esc(it.artist||'')}</div>
           </span>
           ${tag}
-          <button class="heart${fav?' on':''}" onclick="event.stopPropagation();toggleFav(it.file,this)" title="收藏">${fav?'♥':'♡'}</button>
+          <button class="heart${fav?' on':''}" onclick="event.stopPropagation();toggleFav(it.file,it.title,this)" title="收藏">${fav?'♥':'♡'}</button>
         </div>`;
       });
       return s;
     };
     html += sec(cats.song,'歌曲','','');
     html += sec(cats.instrument,'器乐曲','器乐','i');
+    html += sec(cats.puju,'蒲剧','蒲剧','p');
+    html += sec(cats.errenzhuan,'二人转','二人转','e');
     html += sec(cats.mv,'MV','MV','m');
   }
   document.getElementById('list').innerHTML = '<div class="stat" id="stat">共 '+songs.length+' 首 · 显示 '+shown.length+' 首</div>' + html;
@@ -595,9 +601,11 @@ function toggleVol(){
 }
 
 // ===== 收藏（本设备）=====
-function toggleFav(file, btn){
-  if(favs[file]){ delete favs[file]; } else { favs[file] = 1; }
+function toggleFav(file, title, btn){
+  const old = favs[file] ? file : (favs[title] ? title : null);
+  if(old){ delete favs[old]; } else { favs[file] = 1; }
   localStorage.setItem('cloudFavs', JSON.stringify(favs));
+  if(btn){ btn.classList.toggle('on', !!favs[file] || !!favs[title]); btn.textContent = (favs[file]||favs[title]) ? '♥' : '♡'; }
   applyFilter();
 }
 function toggleFavFilter(){
