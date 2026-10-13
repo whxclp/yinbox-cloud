@@ -458,14 +458,18 @@ function setPlaybackState(p){
 }
 // ===== 播放 =====
 function loadMedia(media, f){
-  // 统一先试 songs/ 子目录，404 则回退仓库根目录（兼容旧文件在根目录的历史布局）
-  let tryRoot = false;
+  // 仓库实际布局：音频在根目录。先试根目录，404 再回退 songs/（兼容历史子目录布局）
+  let tryRoot = true;
   const setSrc = ()=>{ media.src = (tryRoot ? '' : 'songs/') + encodeURI(f); };
   media.onerror = ()=>{
-    if(!tryRoot){
-      tryRoot = true;
+    if(tryRoot){
+      tryRoot = false;
       setSrc();
       media.play().catch(()=>{});
+    } else {
+      // 根目录与 songs/ 都失败：真正失败才提示
+      const s = (typeof cur === 'number' && shown[cur]) ? shown[cur] : null;
+      document.getElementById('nowTitle').textContent = '播放失败：' + ((s && s.title) || f);
     }
   };
   setSrc();
@@ -494,7 +498,16 @@ function playAt(i){
   }
   const lrc = parseLrc(s.lrc||'');
   curMedia.onloadedmetadata = ()=>{ durEl.textContent = fmt(curMedia.duration); };
-  curMedia.play().catch(e=>{ if(e.name!=='AbortError') document.getElementById('nowTitle').textContent='播放失败: '+e.name; });
+  curMedia.play().catch(e=>{
+    if(e.name==='AbortError') return;
+    // 媒体可能仍在加载，onerror 会在两路径都失败时兜底提示
+    setTimeout(()=>{
+      if(curMedia.error || curMedia.networkState === 3){
+        const s = shown[cur];
+        document.getElementById('nowTitle').textContent = '播放失败：' + ((s && s.title) || '');
+      }
+    }, 1200);
+  });
   document.getElementById('nowTitle').textContent = s.title || s.file.split('/').pop();
   document.getElementById('nowArtist').textContent = s.artist || '';
   setMediaSession(s.title || s.file.split('/').pop(), s.artist || '');
@@ -505,7 +518,16 @@ function playAt(i){
   render();
 }
 let playing = false;
+function clearFailMsg(){
+  const nt = document.getElementById('nowTitle');
+  if(nt.textContent.indexOf('播放失败') === 0){
+    const s = shown[cur];
+    if(s){ nt.textContent = s.title || s.file.split('/').pop(); }
+  }
+}
 function markPlaying(v){ playing = v; setPlaybackState(v?'playing':'paused'); syncControls(); }
+audio.addEventListener('playing', clearFailMsg);
+mvPlayer.addEventListener('playing', clearFailMsg);
 audio.addEventListener('play', ()=>{ markPlaying(true); });
 audio.addEventListener('pause', ()=>{ markPlaying(false); });
 audio.addEventListener('ended', ()=>{ markPlaying(false); });
