@@ -172,6 +172,7 @@
   <div class="toolbar">
     <input id="kw" placeholder="筛选本地歌单" autocomplete="off" style="display:none">
     <button id="favFilter" onclick="toggleFavFilter()">只看收藏（三排）</button>
+    <button onclick="favAll()" title="把歌单里所有歌曲点亮红心，便于在“只看收藏”里三排浏览">一键全部收藏</button>
     <button onclick="favExport()" title="复制收藏码，到另一台设备可导入">导出收藏</button>
     <button onclick="favImport()" title="粘贴另一台设备导出的收藏码">导入收藏</button>
     <button onclick="toggleOnline()" id="onlineBtn">网上搜歌</button>
@@ -624,6 +625,12 @@ function toggleFav(file, title, btn){
 function toggleFavFilter(){
   favFilter = !favFilter;
   document.getElementById('favFilter').classList.toggle('on', favFilter);
+  applyFilter();
+}
+function favAll(){
+  songs.forEach(s=>{ favs[s.file] = 1; });
+  localStorage.setItem('cloudFavs', JSON.stringify(favs));
+  alert('已全部收藏，共 '+songs.length+' 首。现在点“只看收藏（三排）”即可三排浏览。');
   applyFilter();
 }
 function favExport(){
