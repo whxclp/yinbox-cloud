@@ -464,7 +464,7 @@ function loadMedia(media, f){
     if(!tryRoot){
       tryRoot = true;
       setSrc();
-      if(!media.paused) media.play().catch(()=>{});
+      media.play().catch(()=>{});
     }
   };
   setSrc();
