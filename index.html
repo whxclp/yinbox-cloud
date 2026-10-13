@@ -157,6 +157,7 @@
     font-size:14px; line-height:1.8; padding:10px 16px;
   }
   .lyric.plain .lrcline{padding:1px 0;}
+  .lyric.plain .lrcline.cur{color:#ffb347;font-weight:bold;font-size:15px;}
   @media (max-width:480px){
     .ctrls{gap:16px;}
     .ctrls .big{min-width:56px; height:46px; font-size:16px;}
@@ -169,7 +170,7 @@
   <p>歌在云端，任何设备随时听 · 免注册 · 无广告</p>
   <div class="toolbar">
     <input id="kw" placeholder="筛选本地歌单" autocomplete="off" style="display:none">
-    <button id="favFilter" onclick="toggleFavFilter()">只看收藏</button>
+    <button id="favFilter" onclick="toggleFavFilter()">只看收藏（三排）</button>
     <button onclick="toggleOnline()" id="onlineBtn">网上搜歌</button>
   </div>
   <div id="onlineSearch">
@@ -622,22 +623,30 @@ function parseLrc(text){
   out.sort((a,b)=>a.t-b.t);
   return out.length ? out : null;
 }
+let lrcDom = null;
 function showLyric(lrc, t){
   const box = document.getElementById('lyricBox');
   if(!lrc || curMedia === mvPlayer){ box.style.display='none'; return; }
-  if(lrc.plain){
-    box.classList.add('plain');
-    box.style.textAlign = 'center';
-    box.innerHTML = lrc.plain.map(s=>'<div class="lrcline">'+s+'</div>').join('');
-    box.style.display = 'block';
-    box.scrollTop = 0;
-    return;
+  box.classList.add('plain');
+  box.style.textAlign = 'center';
+  const isPlain = !!lrc.plain;
+  const rows = isPlain ? lrc.plain : lrc.map(x=>x.text);
+  if(!lrcDom || lrcDom.lrc !== lrc){
+    box.innerHTML = rows.map(s=>'<div class="lrcline">'+s+'</div>').join('');
+    lrcDom = {lrc, els: Array.from(box.querySelectorAll('.lrcline')), lastIdx:-2};
+    if(isPlain){ box.scrollTop = 0; }
   }
-  box.classList.remove('plain');
-  let line = '';
-  for(let i=lrc.length-1;i>=0;i--){ if(lrc[i].t <= t+0.2){ line = lrc[i].text; break; } }
-  if(line){ box.textContent = line; box.style.display = 'block'; }
-  else { box.style.display = 'none'; }
+  if(isPlain){ box.style.display='block'; return; }
+  let idx = -1;
+  for(let i=lrc.length-1;i>=0;i--){ if(lrc[i].t <= t+0.2){ idx = i; break; } }
+  lrcDom.els.forEach((el,i)=>el.classList.toggle('cur', i===idx));
+  if(idx<0){ box.style.display='none'; return; }
+  box.style.display='block';
+  if(idx !== lrcDom.lastIdx){
+    lrcDom.lastIdx = idx;
+    const el = lrcDom.els[idx];
+    box.scrollTop = Math.max(0, el.offsetTop - box.clientHeight/2 + el.clientHeight/2);
+  }
 }
 // 无歌词时显示当前歌名
 audio.addEventListener('play', ()=>{
