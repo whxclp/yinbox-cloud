@@ -444,6 +444,29 @@ function setPlaybackState(p){
   if('mediaSession' in navigator){ try{ navigator.mediaSession.playbackState = p; }catch(e){} }
 }
 // ===== 播放 =====
+async function loadSegmented(media, parts){
+  // 分段合并播放：mp3/mp4 大文件拆成多段上传，这里顺序拉取后 Blob 拼接
+  try{
+    const blobs = [];
+    for(const p of parts){
+      let got = false;
+      for(const pre of ['', 'songs/']){
+        try{
+          const r = await fetch(pre + encodeURI(p), {cache:'no-store'});
+          if(r.ok){ blobs.push(await r.blob()); got = true; break; }
+        }catch(e){}
+      }
+      if(!got) throw new Error('404 ' + p);
+    }
+    const isV = /\.mp4$/i.test(parts[0]);
+    const url = URL.createObjectURL(new Blob(blobs, {type: isV ? 'video/mp4' : 'audio/mpeg'}));
+    media.src = url;
+    media.play().catch(()=>{});
+  }catch(e){
+    const s = (typeof cur === 'number' && shown[cur]) ? shown[cur] : null;
+    document.getElementById('nowTitle').textContent = '播放失败：' + ((s && s.title) || f || '');
+  }
+}
 function loadMedia(media, f){
   // 仓库实际布局：音频在根目录。先试根目录，404 再回退 songs/（兼容历史子目录布局）
   let tryRoot = true;
@@ -475,7 +498,12 @@ function playAt(i){
   cur = i;
   const s = shown[i];
   stopMedia();
-  if(s.type === 'mv'){
+  if(s.parts && s.parts.length){
+    // 分段大文件：Blob 拼接播放
+    curMedia = (s.type === 'mv') ? mvPlayer : audio;
+    if(s.type === 'mv') mvWrap.style.display = 'block';
+    loadSegmented(curMedia, s.parts);
+  } else if(s.type === 'mv'){
     curMedia = mvPlayer;
     loadMedia(mvPlayer, s.file);
     mvWrap.style.display = 'block';
