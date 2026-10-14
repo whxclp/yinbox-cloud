@@ -253,6 +253,8 @@ function applyFilter(){
     if(!kw) return true;
     return (String(s.title||'')+' '+String(s.artist||'')).toLowerCase().includes(kw);
   });
+  // 显示顺序 = 播放顺序：按标题自然排序（数字序），合集内相邻
+  shown.sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'zh-Hans-CN',{numeric:true}));
   render();
 }
 // ===== 网上搜歌 =====
@@ -382,7 +384,11 @@ function histDel(kw){
 }
 function render(){
   const cats = {song:[], instrument:[], puju:[], errenzhuan:[], mv:[]};
-  shown.forEach(s=>{ cats[classify(s)].push(s); });
+  const colls = {};
+  shown.forEach(s=>{
+    if(s.coll){ (colls[s.coll] || (colls[s.coll]=[])).push(s); }
+    else { cats[classify(s)].push(s); }
+  });
   const st = document.getElementById('stat');
   let html = '';
   document.getElementById('list').className = favFilter ? 'fav-grid' : '';
@@ -395,9 +401,9 @@ function render(){
   } else {
     const sec = (items, label, tagText, tagClass)=>{
       if(!items.length) return '';
-      const sorted = items.slice().sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'zh-Hans-CN'));
+      // shown 已按标题自然排序，分组直接沿用该顺序 = 播放顺序
       let s = '<div class="group-title">'+label+'（'+items.length+'）</div>';
-      sorted.forEach((it,i)=>{
+      items.forEach((it,i)=>{
         const isPlaying = cur>=0 && shown[cur]===it;
         const fav = !!favs[it.file] || !!favs[it.title];
         const tag = tagText ? `<span class="tag ${tagClass}">${tagText}</span>` : '';
@@ -412,13 +418,16 @@ function render(){
       });
       return s;
     };
+    // 合集分类优先展示，其次常规分类
+    Object.keys(colls).sort((a,b)=>String(a).localeCompare(String(b),'zh-Hans-CN',{numeric:true}))
+      .forEach(name=>{ html += sec(colls[name], '合集 · '+name, name, 'c'); });
     html += sec(cats.song,'歌曲','','');
     html += sec(cats.instrument,'器乐曲','器乐','i');
     html += sec(cats.puju,'蒲剧','蒲剧','p');
     html += sec(cats.errenzhuan,'二人转','二人转','e');
     html += sec(cats.mv,'MV','MV','m');
   }
-  document.getElementById('list').innerHTML = '<div class="stat" id="stat">共 '+songs.length+' 首 · 显示 '+shown.length+' 首 · 点歌曲左侧序号=取消收藏（灰=已取消，歌仍在歌单）</div>' + html;
+  document.getElementById('list').innerHTML = '<div class="stat" id="stat">共 '+songs.length+' 首 · 显示 '+shown.length+' 首 · 显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=取消收藏（灰=已取消，歌仍在歌单）</div>' + html;
 }
 function esc(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
@@ -577,14 +586,26 @@ function stopSong(){
   syncControls();
   render();
 }
+function collNextIdx(curIdx, dir){
+  const s = shown[curIdx];
+  if(!s || !s.coll) return -1;
+  const same = [];
+  shown.forEach((x,i)=>{ if(x.coll===s.coll) same.push(i); });
+  if(same.length < 2) return -1;
+  const pos = same.indexOf(curIdx);
+  return same[(pos + dir + same.length) % same.length];
+}
 function nextSong(auto){
   if(!shown.length) return;
   let next;
   if(mode===3){ next = Math.floor(Math.random()*shown.length); }
   else if(mode===2){ next = cur; }
   else {
-    next = cur + 1;
-    if(next >= shown.length){ next = mode===1 ? 0 : (auto ? -1 : 0); }
+    next = collNextIdx(cur, 1);
+    if(next < 0){
+      next = cur + 1;
+      if(next >= shown.length){ next = mode===1 ? 0 : (auto ? -1 : 0); }
+    }
   }
   if(next<0){ curMedia.pause(); curMedia.currentTime = 0; return; }
   playAt(next);
@@ -592,7 +613,8 @@ function nextSong(auto){
 function prevSong(){
   if(cur<0 || !shown.length) return;
   if(curMedia.currentTime > 3){ curMedia.currentTime = 0; return; }
-  playAt((cur-1+shown.length) % shown.length);
+  const p = collNextIdx(cur, -1);
+  playAt(p < 0 ? (cur-1+shown.length) % shown.length : p);
 }
 function seekBy(delta){
   if(!curMedia.duration || Number.isNaN(curMedia.duration)) return;
