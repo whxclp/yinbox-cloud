@@ -30,6 +30,10 @@
   header h1{font-size:18px; font-weight:700; letter-spacing:.5px; display:flex; align-items:center; gap:8px;}
   header h1 .note{color:var(--acc);}
   header p{color:var(--sub); font-size:14px; margin-top:2px;}
+  .searchbar{display:flex; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--line);}
+  .searchbar button{background:var(--btn); border:1px solid var(--line); color:var(--text); border-radius:8px; padding:9px 18px; font-size:15px; cursor:pointer; min-height:40px;}
+  .searchbar button:hover{background:var(--btn-hi);}
+  .searchbar button:active{border-color:var(--acc);}
   .toolbar{display:flex; gap:8px; padding:12px 16px; flex-wrap:wrap; background:var(--panel); border-bottom:1px solid var(--line);}
   .toolbar input{
     flex:1; min-width:140px; background:var(--btn); border:1px solid var(--line);
@@ -183,9 +187,11 @@
     <span class="t" id="dur">0:00</span>
   </div>
 </div>
+<div class="searchbar">
+    <button onclick="toggleOnline()" id="onlineBtn" title="搜全网歌曲，试听后可标记加入歌单">网上搜歌</button>
+  </div>
 <div class="toolbar">
     <input id="kw" placeholder="筛选本地歌单" autocomplete="off" style="display:none">
-    <button onclick="toggleOnline()" id="onlineBtn" title="搜全网歌曲，试听后可标记加入歌单">网上搜歌</button>
     <button onclick="favAll()" title="把歌单里所有歌曲点亮红心，全部恢复显示">一键全部收藏</button>
     <button onclick="favClearAll()" title="取消全部收藏，红心全部熄灭（收藏记录只在本设备）">取消全部收藏</button>
     <button onclick="favExport()" title="复制收藏码，到另一台设备可导入">导出收藏</button>
