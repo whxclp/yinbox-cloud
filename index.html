@@ -46,7 +46,7 @@
   #navchips{display:flex; flex-wrap:wrap; gap:6px; padding:10px 16px 12px; background:var(--panel); border-bottom:1px solid var(--line);}
   .chip{font-size:12px; padding:4px 10px; border-radius:999px; background:var(--btn); color:var(--txt); cursor:pointer; border:1px solid var(--bd); white-space:nowrap;}
   .chip:hover{background:var(--btn-hi); border-color:var(--acc);}
-  .stat{color:var(--sub); font-size:13px; margin:6px 16px 8px; line-height:1.7;}
+  .stat{color:var(--sub); font-size:13px; line-height:1.7;}
   .stat b{color:#ff8c00; font-weight:600;}
   .group-title{
     font-size:14px; color:var(--acc); font-weight:700; margin:14px 0 8px;
@@ -158,9 +158,8 @@
 <body>
 <header>
   <h1><span class="note">♪</span> 音盒 · 云端版</h1>
-  <p>歌在云端，任何设备随时听 · 免注册 · 无广告</p>
+  <p>歌在云端，任何设备随时听 · 免注册 · 无广告 <span class="stat" id="statTop"></span></p>
 </header>
-<div class="stat" id="statTop"></div>
 <div id="navchips"></div>
 <div class="player">
 <div class="ctrls">
