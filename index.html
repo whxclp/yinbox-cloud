@@ -159,8 +159,7 @@
   <p>歌在云端，任何设备随时听 · 免注册 · 无广告</p>
   <div class="toolbar">
     <input id="kw" placeholder="筛选本地歌单" autocomplete="off" style="display:none">
-    <button id="favFilter" onclick="toggleFavFilter()">只看收藏</button>
-    <button onclick="favAll()" title="把歌单里所有歌曲点亮红心，便于在“只看收藏”里网格浏览">一键全部收藏</button>
+    <button onclick="favAll()" title="把歌单里所有歌曲点亮红心，全部恢复显示">一键全部收藏</button>
     <button onclick="favClearAll()" title="取消全部收藏，红心全部熄灭（收藏记录只在本设备）">取消全部收藏</button>
     <button onclick="favExport()" title="复制收藏码，到另一台设备可导入">导出收藏</button>
     <button onclick="favImport()" title="粘贴另一台设备导出的收藏码">导入收藏</button>
@@ -231,6 +230,11 @@ function loadSongs(){
     .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     .then(d=>{
       songs = Array.isArray(d.songs) ? d.songs.filter(s=>s && s.file) : [];
+      // 首次打开：无收藏记录时默认全部收藏，列表=全部歌曲；取消某首即从列表移除、后面的自动顶上
+      if(!localStorage.getItem('cloudFavs')){
+        songs.forEach(s=>{ favs[s.file] = 1; });
+        localStorage.setItem('cloudFavs', JSON.stringify(favs));
+      }
       applyFilter();
     })
     .catch(()=>{
@@ -253,7 +257,7 @@ function classify(s){
 function applyFilter(){
   const kw = (document.getElementById('kw').value||'').trim().toLowerCase();
   shown = songs.filter(s=>{
-    if(favFilter && !favs[s.file] && !favs[s.title]) return false;
+    if(!favs[s.file] && !favs[s.title]) return false;   // 列表只显示已收藏：取消收藏=移出列表，后面的自动顶上
     if(!kw) return true;
     return (String(s.title||'')+' '+String(s.artist||'')).toLowerCase().includes(kw);
   });
@@ -406,9 +410,7 @@ function render(){
   if(!songs.length){
     html = '<div class="empty">歌单还是空的。<br>把歌曲文件放进 <b>songs/</b> 文件夹，在 songs.json 里登记即可（详见 README）。</div>';
   } else if(!shown.length){
-    html = favFilter
-      ? '<div class="empty">本设备还没有收藏的歌曲。<br>点上方「一键全部收藏」全收藏；取消某首点它左侧的序号。<br>收藏只保存在当前设备（手机/电脑各自独立）。</div>'
-      : '<div class="empty">没有符合筛选条件的歌曲。</div>';
+    html = '<div class="empty">列表为空：已取消全部收藏。<br>点上方「一键全部收藏」可全部恢复显示。</div>';
   } else {
     const sec = (items, label, tagText, tagClass, secId)=>{
       if(!items.length) return '';
@@ -438,7 +440,7 @@ function render(){
     html += sec(cats.errenzhuan,'二人转','二人转','e','errenzhuan');
     html += sec(cats.mv,'MV','MV','m','mv');
   }
-  document.getElementById('list').innerHTML = '<div id="navchips"></div><div class="stat" id="stat">共 '+songs.length+' 首 · 显示 '+shown.length+' 首 · 显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=取消收藏（灰=已取消，歌仍在歌单）</div>' + html;
+  document.getElementById('list').innerHTML = '<div id="navchips"></div><div class="stat" id="stat">共 '+songs.length+' 首 · 显示 '+shown.length+' 首（已收藏）· 显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=取消收藏，取消后该歌移出列表、后面的自动顶上（点『一键全部收藏』可全部恢复）</div>' + html;
   // 顶部分类直达导航：点击滚动到对应分组
   const nav = document.getElementById('navchips');
   if(nav){
@@ -734,17 +736,17 @@ function toggleFavFilter(){
 function favAll(){
   songs.forEach(s=>{ favs[s.file] = 1; });
   localStorage.setItem('cloudFavs', JSON.stringify(favs));
-  alert('已全部收藏，共 '+songs.length+' 首。现在点“只看收藏”即可网格浏览。');
+  alert('已全部收藏，共 '+songs.length+' 首，全部恢复显示。');
   applyFilter();
 }
 function favClearAll(){
   const n = Object.keys(favs).length;
   if(!n){ alert('本设备还没有收藏的歌曲，无需取消。'); return; }
-  if(!confirm('确定取消全部收藏吗？（红心将全部熄灭，只影响本设备收藏记录，不影响歌单）')) return;
+  if(!confirm('确定取消全部收藏吗？列表将清空（只影响本设备收藏记录，点“一键全部收藏”可全部恢复）')) return;
   favs = {};
   localStorage.setItem('cloudFavs', JSON.stringify(favs));
   applyFilter();
-  alert('已取消全部收藏。点“一键全部收藏”可随时恢复。');
+  alert('已取消全部收藏，列表已清空。点“一键全部收藏”可随时全部恢复。');
 }
 function favExport(){
   const n = Object.keys(favs).length;
