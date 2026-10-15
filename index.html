@@ -254,7 +254,14 @@ function applyFilter(){
     return (String(s.title||'')+' '+String(s.artist||'')).toLowerCase().includes(kw);
   });
   // 显示顺序 = 播放顺序：按标题自然排序（数字序），合集内相邻
-  shown.sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'zh-Hans-CN',{numeric:true}));
+  // 显示顺序 = 播放顺序：歌曲组最优先，其次合集分类，再其他；组内标题自然排序，合集内相邻
+  const gr = s=>{ if(s.coll) return 1; const c=classify(s); return c==='song'?0:(c==='instrument'?2:(c==='puju'?3:(c==='errenzhuan'?4:5))); };
+  shown.sort((a,b)=>{
+    const ga=gr(a), gb=gr(b);
+    if(ga!==gb) return ga-gb;
+    if(a.coll && b.coll && a.coll!==b.coll) return String(a.coll).localeCompare(String(b.coll),'zh-Hans-CN',{numeric:true});
+    return String(a.title||'').localeCompare(String(b.title||''),'zh-Hans-CN',{numeric:true});
+  });
   render();
 }
 // ===== 网上搜歌 =====
@@ -418,10 +425,10 @@ function render(){
       });
       return s;
     };
-    // 合集分类优先展示，其次常规分类
+    // 歌曲优先展示，其次合集分类，再其他常规分类
+    html += sec(cats.song,'歌曲','','');
     Object.keys(colls).sort((a,b)=>String(a).localeCompare(String(b),'zh-Hans-CN',{numeric:true}))
       .forEach(name=>{ html += sec(colls[name], '合集 · '+name, name, 'c'); });
-    html += sec(cats.song,'歌曲','','');
     html += sec(cats.instrument,'器乐曲','器乐','i');
     html += sec(cats.puju,'蒲剧','蒲剧','p');
     html += sec(cats.errenzhuan,'二人转','二人转','e');
