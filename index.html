@@ -458,7 +458,8 @@ function render(){
         });
     }
   }
-  document.getElementById('list').innerHTML = html + '<div class="stat" id="stat">共 '+songs.length+' 首 · 显示 '+shown.length+' 首 · 显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=<b>取消收藏</b>，取消后移入<b>『备选』</b>分类、后面的自动顶上（备选里点序号可<b>恢复收藏</b>）</div>';
+  const stat = '<div class="stat" id="stat">共 '+songs.length+' 首 · 显示 '+shown.length+' 首 · 显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=<b>取消收藏</b>，取消后移入<b>『备选』</b>分类、后面的自动顶上（备选里点序号可<b>恢复收藏</b>）</div>';
+  document.getElementById('list').innerHTML = stat + html;
   // 顶部分类直达导航：点击滚动到对应分组
   const nav = document.getElementById('navchips');
   if(nav){
