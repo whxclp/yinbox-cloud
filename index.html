@@ -53,6 +53,8 @@
     display:flex; align-items:center; gap:8px;
   }
   .group-title::before{content:''; width:4px; height:14px; background:var(--acc); border-radius:2px; display:inline-block;}
+  .group-title.sub{font-size:13px; color:var(--sub); font-weight:600; margin:10px 0 6px 12px;}
+  .group-title.sub::before{width:3px; height:11px; background:var(--sub);}
   #list{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding-top:2px;}
   #list .group-title{grid-column:1/-1;}
   .song{
@@ -417,7 +419,10 @@ function render(){
     const sec = (items, label, tagText, tagClass, secId)=>{
       if(!items.length) return '';
       // shown 已按标题自然排序，分组直接沿用该顺序 = 播放顺序
-      let s = '<div class="group-title" id="sec-'+(secId||'')+'">'+label+'（'+items.length+'）</div>';
+      return '<div class="group-title" id="sec-'+(secId||'')+'">'+label+'（'+items.length+'）</div>' + secItems(items, tagText, tagClass);
+    };
+    const secItems = (items, tagText, tagClass)=>{
+      let s = '';
       items.forEach((it,i)=>{
         const isPlaying = cur>=0 && shown[cur]===it;
         const fav = !!favs[it.file] || !!favs[it.title];
@@ -441,7 +446,17 @@ function render(){
     html += sec(cats.puju,'蒲剧','蒲剧','p','puju');
     html += sec(cats.errenzhuan,'二人转','二人转','e','errenzhuan');
     html += sec(cats.mv,'MV','MV','m','mv');
-    html += sec(cats.backup,'备选','备选','b','backup');
+    // 备选按歌单分类分组显示：取消收藏的歌曲归入对应分类的备选组
+    if(cats.backup.length){
+      const backupGroups = {};
+      cats.backup.forEach(s=>{ const k = s.coll || '未分类'; (backupGroups[k] || (backupGroups[k]=[])).push(s); });
+      html += '<div class="group-title" id="sec-backup">备选（'+cats.backup.length+'）</div>';
+      Object.keys(backupGroups).sort((a,b)=>String(a).localeCompare(String(b),'zh-Hans-CN',{numeric:true}))
+        .forEach(name=>{
+          html += '<div class="group-title sub">'+esc(name)+'（'+backupGroups[name].length+'）</div>';
+          html += secItems(backupGroups[name], '', '');
+        });
+    }
   }
   document.getElementById('list').innerHTML = html + '<div class="stat" id="stat">共 '+songs.length+' 首 · 显示 '+shown.length+' 首 · 显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=<b>取消收藏</b>，取消后移入<b>『备选』</b>分类、后面的自动顶上（备选里点序号可<b>恢复收藏</b>）</div>';
   // 顶部分类直达导航：点击滚动到对应分组
