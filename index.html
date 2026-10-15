@@ -227,6 +227,9 @@ const mvPlayer = document.getElementById('mvPlayer');
 mvPlayer.preload = 'metadata';
 let curMedia = audio;   // 当前播放的媒体（audio 或 video）
 
+// 兜底：加载时强制回到主界面（防止手机浏览器恢复上次的「网上搜歌」面板状态）
+try{ document.getElementById('onlineSearch').style.display='none'; }catch(e){}
+
 // ===== 歌单加载 =====
 function loadSongs(){
   fetch('songs.json', {cache:'no-store'})
