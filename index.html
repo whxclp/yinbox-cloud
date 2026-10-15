@@ -257,7 +257,7 @@ function classify(s){
 function applyFilter(){
   const kw = (document.getElementById('kw').value||'').trim().toLowerCase();
   shown = songs.filter(s=>{
-    if(!favs[s.file] && !favs[s.title]) return false;   // 列表只显示已收藏：取消收藏=移出列表，后面的自动顶上
+    // 收藏状态不参与筛选：已收藏进原分组，未收藏（取消过的）进「备选」分类
     if(!kw) return true;
     return (String(s.title||'')+' '+String(s.artist||'')).toLowerCase().includes(kw);
   });
@@ -398,9 +398,10 @@ function histDel(kw){
   renderHist();
 }
 function render(){
-  const cats = {song:[], instrument:[], puju:[], errenzhuan:[], mv:[]};
+  const cats = {song:[], instrument:[], puju:[], errenzhuan:[], mv:[], backup:[]};
   const colls = {};
   shown.forEach(s=>{
+    if(!favs[s.file] && !favs[s.title]){ cats.backup.push(s); return; }  // 取消收藏→移入备选分类
     if(s.coll){ (colls[s.coll] || (colls[s.coll]=[])).push(s); }
     else { cats[classify(s)].push(s); }
   });
@@ -410,7 +411,7 @@ function render(){
   if(!songs.length){
     html = '<div class="empty">歌单还是空的。<br>把歌曲文件放进 <b>songs/</b> 文件夹，在 songs.json 里登记即可（详见 README）。</div>';
   } else if(!shown.length){
-    html = '<div class="empty">列表为空：已取消全部收藏。<br>点上方「一键全部收藏」可全部恢复显示。</div>';
+    html = '<div class="empty">没有符合筛选条件的歌曲。</div>';
   } else {
     const sec = (items, label, tagText, tagClass, secId)=>{
       if(!items.length) return '';
@@ -439,8 +440,9 @@ function render(){
     html += sec(cats.puju,'蒲剧','蒲剧','p','puju');
     html += sec(cats.errenzhuan,'二人转','二人转','e','errenzhuan');
     html += sec(cats.mv,'MV','MV','m','mv');
+    html += sec(cats.backup,'备选','备选','b','backup');
   }
-  document.getElementById('list').innerHTML = '<div id="navchips"></div><div class="stat" id="stat">共 '+songs.length+' 首 · 显示 '+shown.length+' 首（已收藏）· 显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=取消收藏，取消后该歌移出列表、后面的自动顶上（点『一键全部收藏』可全部恢复）</div>' + html;
+  document.getElementById('list').innerHTML = '<div id="navchips"></div><div class="stat" id="stat">共 '+songs.length+' 首 · 显示 '+shown.length+' 首 · 显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=取消收藏，取消后移入『备选』分类、后面的自动顶上（备选里点序号可恢复收藏）</div>' + html;
   // 顶部分类直达导航：点击滚动到对应分组
   const nav = document.getElementById('navchips');
   if(nav){
@@ -452,6 +454,7 @@ function render(){
     chip('蒲剧','sec-puju');
     chip('二人转','sec-errenzhuan');
     chip('MV','sec-mv');
+    chip('备选','sec-backup');
     nav.innerHTML = chips.join('');
     nav.onclick = e=>{
       const c = e.target.closest('.chip');
@@ -736,17 +739,17 @@ function toggleFavFilter(){
 function favAll(){
   songs.forEach(s=>{ favs[s.file] = 1; });
   localStorage.setItem('cloudFavs', JSON.stringify(favs));
-  alert('已全部收藏，共 '+songs.length+' 首，全部恢复显示。');
+  alert('已全部收藏，共 '+songs.length+' 首，全部歌曲已恢复。');
   applyFilter();
 }
 function favClearAll(){
   const n = Object.keys(favs).length;
   if(!n){ alert('本设备还没有收藏的歌曲，无需取消。'); return; }
-  if(!confirm('确定取消全部收藏吗？列表将清空（只影响本设备收藏记录，点“一键全部收藏”可全部恢复）')) return;
+  if(!confirm('确定取消全部收藏吗？全部歌曲将移入『备选』分类（点“一键全部收藏”可全部恢复）')) return;
   favs = {};
   localStorage.setItem('cloudFavs', JSON.stringify(favs));
   applyFilter();
-  alert('已取消全部收藏，列表已清空。点“一键全部收藏”可随时全部恢复。');
+  alert('已取消全部收藏，全部歌曲已移入『备选』。点“一键全部收藏”可全部恢复。');
 }
 function favExport(){
   const n = Object.keys(favs).length;
