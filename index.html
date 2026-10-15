@@ -46,7 +46,7 @@
   #navchips{display:flex; flex-wrap:wrap; gap:6px; padding:10px 16px 12px; background:var(--panel); border-bottom:1px solid var(--line);}
   .chip{font-size:12px; padding:4px 10px; border-radius:999px; background:var(--btn); color:var(--txt); cursor:pointer; border:1px solid var(--bd); white-space:nowrap;}
   .chip:hover{background:var(--btn-hi); border-color:var(--acc);}
-  .stat{color:var(--sub); font-size:13px; margin:4px 2px 10px;}
+  .stat{color:var(--sub); font-size:13px; margin:6px 16px 8px; line-height:1.7;}
   .stat b{color:#ff8c00; font-weight:600;}
   .group-title{
     font-size:14px; color:var(--acc); font-weight:700; margin:14px 0 8px;
@@ -160,6 +160,7 @@
   <h1><span class="note">♪</span> 音盒 · 云端版</h1>
   <p>歌在云端，任何设备随时听 · 免注册 · 无广告</p>
 </header>
+<div class="stat" id="statTop"></div>
 <div id="navchips"></div>
 <div class="player">
 <div class="ctrls">
@@ -461,8 +462,9 @@ function render(){
         });
     }
   }
-  const stat = '<div class="stat" id="stat">共 '+songs.length+' 首 · 显示 '+shown.length+' 首 · 显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=<b>取消收藏</b>，取消后移入<b>『备选』</b>分类、后面的自动顶上（备选里点序号可<b>恢复收藏</b>）</div>';
-  document.getElementById('list').innerHTML = stat + html;
+  const statEl = document.getElementById('statTop');
+  if(statEl){ statEl.innerHTML = '共 '+songs.length+' 首 · 显示 '+shown.length+' 首 · 显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=<b>取消收藏</b>，取消后移入<b>『备选』</b>分类、后面的自动顶上（备选里点序号可<b>恢复收藏</b>）'; }
+  document.getElementById('list').innerHTML = html;
   // 顶部分类直达导航：点击滚动到对应分组
   const nav = document.getElementById('navchips');
   if(nav){
