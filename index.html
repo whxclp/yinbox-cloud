@@ -2,6 +2,9 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>音盒 · 云端版</title>
 <link rel="manifest" href="manifest.json">
@@ -238,7 +241,7 @@ try{ document.getElementById('onlineSearch').style.display='none'; }catch(e){}
 
 // ===== 歌单加载 =====
 function loadSongs(){
-  fetch('songs.json', {cache:'no-store'})
+  fetch('songs.json?v='+Date.now(), {cache:'no-store'})
     .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     .then(d=>{
       songs = Array.isArray(d.songs) ? d.songs.filter(s=>s && s.file) : [];
