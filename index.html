@@ -277,11 +277,11 @@ function loadSongs(){
 
 // ===== 筛选与分类 =====
 function classify(s){
-  if(s && s.type === 'mv') return 'mv';
-  if(s && s.type === 'instrument') return 'instrument';
   const raw = String(s.title||'') + ' ' + String(s.artist||'');
   if(raw.includes('蒲剧')) return 'puju';
   if(raw.includes('二人转')) return 'errenzhuan';
+  if(s && s.type === 'mv') return 'mv';
+  if(s && s.type === 'instrument') return 'instrument';
   if(raw.includes('（曲）') || raw.includes('(曲)')) return 'instrument';
   for(const i of INSTRUMENTS){ if(raw.includes(i)) return 'instrument'; }
   return 'song';
