@@ -250,6 +250,17 @@ function loadSongs(){
         songs.forEach(s=>{ favs[s.file] = 1; });
         localStorage.setItem('cloudFavs', JSON.stringify(favs));
       }
+      // 备选墓碑名单（明确取消过的歌）：首次生成时保持当前状态不变；之后新增歌曲自动补入收藏、直接显示在原分类
+      let banned = JSON.parse(localStorage.getItem('cloudFavsBanned')||'null');
+      if(banned === null){
+        banned = {};
+        songs.forEach(s=>{ if(!favs[s.file] && !favs[s.title] && !s.new) banned[s.file] = 1; });
+        localStorage.setItem('cloudFavsBanned', JSON.stringify(banned));
+      }
+      // 增量：既未收藏也未被取消的歌（含新入库歌曲）自动补入收藏
+      let favChanged = false;
+      songs.forEach(s=>{ if(!favs[s.file] && !favs[s.title] && !banned[s.file] && !banned[s.title]){ favs[s.file] = 1; favChanged = true; } });
+      if(favChanged) localStorage.setItem('cloudFavs', JSON.stringify(favs));
       applyFilter();
     })
     .catch(()=>{
@@ -756,8 +767,10 @@ applyVol();
 // ===== 收藏（本设备）=====
 function toggleFav(file, title, btn){
   const old = favs[file] ? file : (favs[title] ? title : null);
-  if(old){ delete favs[old]; } else { favs[file] = 1; }
+  let banned = JSON.parse(localStorage.getItem('cloudFavsBanned')||'{}');
+  if(old){ delete favs[old]; banned[file] = 1; } else { favs[file] = 1; delete banned[file]; }
   localStorage.setItem('cloudFavs', JSON.stringify(favs));
+  localStorage.setItem('cloudFavsBanned', JSON.stringify(banned));
   if(btn){ btn.classList.toggle('on', !!favs[file] || !!favs[title]); btn.textContent = (favs[file]||favs[title]) ? '♥' : '♡'; }
   applyFilter();
 }
@@ -769,6 +782,7 @@ function toggleFavFilter(){
 function favAll(){
   songs.forEach(s=>{ favs[s.file] = 1; });
   localStorage.setItem('cloudFavs', JSON.stringify(favs));
+  localStorage.setItem('cloudFavsBanned', JSON.stringify({}));
   alert('已全部收藏，共 '+songs.length+' 首，全部歌曲已恢复。');
   applyFilter();
 }
@@ -776,8 +790,11 @@ function favClearAll(){
   const n = Object.keys(favs).length;
   if(!n){ alert('本设备还没有收藏的歌曲，无需取消。'); return; }
   if(!confirm('确定取消全部收藏吗？全部歌曲将移入『备选』分类（点“一键全部收藏”可全部恢复）')) return;
+  const banned = {};
+  songs.forEach(s=>{ banned[s.file] = 1; });
   favs = {};
   localStorage.setItem('cloudFavs', JSON.stringify(favs));
+  localStorage.setItem('cloudFavsBanned', JSON.stringify(banned));
   applyFilter();
   alert('已取消全部收藏，全部歌曲已移入『备选』。点“一键全部收藏”可全部恢复。');
 }
