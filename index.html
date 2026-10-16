@@ -190,7 +190,6 @@
     <span class="t" id="dur">0:00</span>
   </div>
 </div>
-<p class="stat" id="statRules" style="padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--line);"></p>
 <div class="toolbar">
     <input id="kw" placeholder="筛选本地歌单" autocomplete="off" style="display:none">
     <button onclick="favAll()" title="把歌单里所有歌曲点亮红心，全部恢复显示">一键全部收藏</button>
@@ -889,6 +888,7 @@ document.getElementById('kw').addEventListener('input', applyFilter);
 document.getElementById('modeBtn').textContent = MODES[mode];
 syncControls();
 loadSongs();
+<p class="stat" id="statRules" style="padding:8px 16px;background:var(--panel);border-top:1px solid var(--line);border-bottom:none;margin-top:8px;"></p>
 </script>
 </body>
 </html>
