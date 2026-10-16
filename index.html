@@ -166,6 +166,7 @@
 <header>
   <h1><span class="note">♪</span> 音盒 · 云端版</h1>
   <p>歌在云端，任何设备随时听 · 免注册 · 无广告 · <span class="stat" id="statTop"></span></p>
+  <p class="stat" id="statRules" style="margin-top:4px;"></p>
 </header>
 <div id="navchips"></div>
 <div class="player">
@@ -888,7 +889,6 @@ document.getElementById('kw').addEventListener('input', applyFilter);
 document.getElementById('modeBtn').textContent = MODES[mode];
 syncControls();
 loadSongs();
-<p class="stat" id="statRules" style="padding:8px 16px;background:var(--panel);border-top:1px solid var(--line);border-bottom:none;margin-top:8px;"></p>
 </script>
 </body>
 </html>
