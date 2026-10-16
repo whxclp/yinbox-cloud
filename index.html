@@ -37,7 +37,7 @@
   .searchbar button{background:var(--btn); border:1px solid var(--line); color:var(--text); border-radius:8px; padding:9px 18px; font-size:15px; cursor:pointer; min-height:40px;}
   .searchbar button:hover{background:var(--btn-hi);}
   .searchbar button:active{border-color:var(--acc);}
-  .pfav{display:flex; flex-direction:column; gap:6px; flex:none;}
+  .pfav{display:flex; flex-direction:row; gap:6px; flex:none;}
   .pfav button{
     background:var(--btn); border:1px solid var(--line); color:var(--text);
     border-radius:8px; padding:9px 14px; font-size:14px; cursor:pointer; white-space:nowrap;
@@ -195,7 +195,6 @@
     <div class="bar" id="progBar"><div class="track"><div class="fill" id="progFill"></div><div class="knob" id="progKnob"></div></div></div>
     <span class="t" id="dur">0:00</span>
   </div>
-</div>
 </div>
 <div class="pfav">
     <button onclick="favExport()" title="复制收藏码，到另一台设备可导入">导出收藏</button>
