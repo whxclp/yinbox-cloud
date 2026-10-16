@@ -32,7 +32,7 @@
   }
   header h1{font-size:18px; font-weight:700; letter-spacing:.5px; display:flex; align-items:center; gap:8px;}
   header h1 .note{color:var(--acc);}
-  header p{color:var(--sub); font-size:14px; margin-top:2px;}
+  header p{color:#ff8c00; font-size:14px; margin-top:2px;}
   .searchbar{display:flex; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--line);}
   .searchbar button{background:var(--btn); border:1px solid var(--line); color:var(--text); border-radius:8px; padding:9px 18px; font-size:15px; cursor:pointer; min-height:40px;}
   .searchbar button:hover{background:var(--btn-hi);}
@@ -53,8 +53,8 @@
   #navchips{display:flex; flex-wrap:wrap; gap:6px; padding:10px 16px 12px; background:var(--panel); border-bottom:1px solid var(--line);}
   .chip{font-size:12px; padding:4px 10px; border-radius:999px; background:var(--btn); color:var(--txt); cursor:pointer; border:1px solid var(--bd); white-space:nowrap;}
   .chip:hover{background:var(--btn-hi); border-color:var(--acc);}
-  .stat{color:var(--sub); font-size:13px; line-height:1.7;}
-  .stat b{color:#ff8c00; font-weight:600;}
+  .stat{color:#ff8c00; font-size:13px; line-height:1.7;}
+  .stat b{color:#ffd93d; font-weight:600;}
   .group-title{
     font-size:14px; color:var(--acc); font-weight:700; margin:14px 0 8px;
     display:flex; align-items:center; gap:8px;
@@ -190,6 +190,7 @@
     <span class="t" id="dur">0:00</span>
   </div>
 </div>
+<p class="stat" id="statRules" style="padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--line);"></p>
 <div class="toolbar">
     <input id="kw" placeholder="筛选本地歌单" autocomplete="off" style="display:none">
     <button onclick="favAll()" title="把歌单里所有歌曲点亮红心，全部恢复显示">一键全部收藏</button>
@@ -482,7 +483,9 @@ function render(){
     }
   }
   const statEl = document.getElementById('statTop');
-  if(statEl){ statEl.innerHTML = '共 '+songs.length+' 首 · 显示 '+shown.length+' 首 · 显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=<b>取消收藏</b>，取消后移入<b>『备选』</b>分类、后面的自动顶上（备选里点序号可<b>恢复收藏</b>）'; }
+  if(statEl){ statEl.innerHTML = '共 '+songs.length+' 首 · 显示 '+shown.length+' 首'; }
+  const rulesEl = document.getElementById('statRules');
+  if(rulesEl){ rulesEl.innerHTML = '显示顺序=播放顺序（标题自然排序，合集内循环）· 点歌曲左侧序号=<b>取消收藏</b>，取消后移入<b>『备选』</b>分类、后面的自动顶上（备选里点序号可<b>恢复收藏</b>）'; }
   document.getElementById('list').innerHTML = html;
   // 顶部分类直达导航：点击滚动到对应分组
   const nav = document.getElementById('navchips');
