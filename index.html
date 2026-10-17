@@ -240,6 +240,11 @@ audio.preload = 'metadata';
 const mvWrap = document.getElementById('mvWrap');
 const mvPlayer = document.getElementById('mvPlayer');
 mvPlayer.preload = 'metadata';
+// 双击 MV 视频全屏 / 退出全屏
+mvPlayer.addEventListener('dblclick', function(){
+  if(document.fullscreenElement){ document.exitFullscreen(); }
+  else if(mvPlayer.requestFullscreen){ mvPlayer.requestFullscreen(); }
+});
 let curMedia = audio;   // 当前播放的媒体（audio 或 video）
 
 // 兜底：加载时强制回到主界面（防止手机浏览器恢复上次的「网上搜歌」面板状态）
